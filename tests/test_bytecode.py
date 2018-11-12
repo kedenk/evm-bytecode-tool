@@ -6,7 +6,6 @@ def test_iterator():
     bytecode = bc.Bytecode("6001600201")
 
     for byte in bytecode:
-        print(byte)
         assert (len(byte) % 2) == 0
 
     assert bytecode[0] == "60"

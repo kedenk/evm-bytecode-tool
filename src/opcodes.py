@@ -1,11 +1,24 @@
-from src.bytecode import Bytecode
+import src.bytecode as bc
 import src.stack as st
+from src.constants import type_hint_constants
 
 
 class HaltException(Exception):
 
     def __init__(self, msg):
         self.msg = msg
+
+
+class ExceptionalHalt(HaltException):
+
+    def __init__(self, msg):
+        super().__init__(msg)
+
+
+class InvalidSequenceLength(Exception):
+
+    def __init__(self, invalid_length: int):
+        self.invalid_length = invalid_length
 
 
 class Opcode(object):
@@ -25,24 +38,33 @@ class Opcode(object):
     def __validateStack(self, stack: st.Stack):
         stackLen = len(stack.getStack())
         if stackLen < self.consume:
-            raise HaltException("Stackunderflow: %d != %d" % (stackLen, self.consume))
+            raise ExceptionalHalt("Stackunderflow: %d != %d" % (stackLen, self.consume))
 
-    def __call__(self, bytecode: Bytecode, stack: st.Stack):
+    def __call__(self, bytecode: bc.Bytecode, stack: st.Stack):
         self.__validateStack(stack)
         if self.func is not None:
             self.func(self, bytecode, stack)
 
 
-def pushFunc(opcode: Opcode, bytecode: Bytecode, stack: st.Stack):
-    stack.push(bytecode.read(opcode.getShift()))
+def pushFunc(opcode: Opcode, bytecode: bc.Bytecode, stack: st.Stack):
+    toPush = bytecode.read(opcode.getShift())
+    if len(toPush) == 0:
+        raise ExceptionalHalt("No values to push in bytecode sequence")
+    stack.push(toPush)
 
 
-def haltFunc(opcode: Opcode, bytecode: Bytecode, stack: st.Stack):
+def haltFunc(opcode: Opcode, bytecode: bc.Bytecode, stack: st.Stack):
     raise HaltException("Halted by %s" % opcode.name)
 
 
-def dummyFunc(opcode: Opcode, bytecode: Bytecode, stack: st.Stack):
-    pass
+def dummyFunc(opcode: Opcode, bytecode: bc.Bytecode, stack: st.Stack):
+
+    if opcode.consume > 0:
+        stack.pop(opcode.consume, type_hint_constants.ANY)
+
+    if opcode.produce > 0:
+        import time
+        stack.push(str(int(time.time())))
 
 
 def initSequenceOpcodes():
@@ -156,7 +178,7 @@ opcodes = {
     "f2": Opcode(0xf2, "CALLCODE", 0, 7, 1, 0),
     "f3": Opcode(0xf3, "RETURN", 0, 2, 0, 0, haltFunc),
     "f4": Opcode(0xf4, "DELEGATECALL", 0, 6, 1, 0),
-    "f5": Opcode(0xf5, "STATICCALL", 0, 6, 1, 0),
+    "fa": Opcode(0xfa, "STATICCALL", 0, 6, 1, 0),
     "fd": Opcode(0xfd, "REVERT", 0, 2, 0, 0),
     "fe": Opcode(0xfe, "INVALID", 0, 0, 0, 0, haltFunc),
     "ff": Opcode(0xff, "SELFDESTRUCT", 0, 1, 0, 0, haltFunc),

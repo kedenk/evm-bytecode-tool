@@ -8,6 +8,9 @@ class Stack(object):
     def __init__(self):
         self.stack: List[str] = []
 
+    def clear(self):
+        self.stack = []
+
     def pop(self, num_items, type_hint) -> str:
         return next(self._pop(num_items, type_hint))
 
@@ -53,3 +56,6 @@ class Stack(object):
             return result
         else:
             raise StopIteration
+
+    def __len__(self):
+        return len(self.stack)
