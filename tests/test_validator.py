@@ -49,3 +49,17 @@ def test_check_input_invalid_bytecodes():
     for entry in invalid_bytecodes:
         valid, invalid_msg = validator.checkInput(entry)
         assert not valid, invalid_msg
+
+
+def test_byteCount():
+
+    sequences = {
+        "6001600203": 5,
+        "6112344301": 5,
+        "43": 1,
+        "61123462123456024300": 10,
+        "60014302601": 5
+    }
+    for bytecode, length in sequences.items():
+        validator = val.Validator()
+        assert length, validator.getByteCount(bytecode)

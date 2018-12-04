@@ -52,10 +52,13 @@ class Validator(object):
 
         return True, None
 
-    def __incOpcodeCount(self):
+    def __incOpcodeCount(self) -> None:
         self.opcode_count += 1
 
-    def getOpcodeCount(self):
+    def getByteCount(self, bytecode: str) -> int:
+        return int(len(bytecode) / 2)
+
+    def getOpcodeCount(self) -> int:
         return self.opcode_count
 
     def __addUsedOpcode(self, opcode: opcodes.Opcode):
@@ -69,10 +72,10 @@ class Validator(object):
         self.opcodeUsageAmount[opcode.opcode] += 1
         self.__incOpcodeCount()
 
-    def getUsedOpcodes(self):
+    def getUsedOpcodes(self) -> int:
         return len(self.usedOpcodes)
 
-    def printOpcodeUsage(self):
+    def printOpcodeUsage(self) -> None:
 
         for key, value in sorted(self.opcodeUsageAmount.items(), key=lambda x: x[0]):
             strKey = hex(key)

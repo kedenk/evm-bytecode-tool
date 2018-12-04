@@ -11,6 +11,7 @@ with open("./logging.json") as logging_config_file:
 log = logging.getLogger(__name__)
 
 VALIDATED_SEQUENCES = 0
+TOTAL_LENGTH = 0
 
 
 def checkInputDir(inputdir: str, validator: val.Validator) -> (int, int):
@@ -38,8 +39,18 @@ def checkInputDir(inputdir: str, validator: val.Validator) -> (int, int):
         global VALIDATED_SEQUENCES
         # inc validates sequences counter
         VALIDATED_SEQUENCES += 1
+        addSequenceLength(validator.getByteCount(content))
 
     return readFiles, failed
+
+
+def addSequenceLength(length: int) -> None:
+    global TOTAL_LENGTH
+    TOTAL_LENGTH += length
+
+
+def getAverageLength() -> float:
+    return TOTAL_LENGTH / VALIDATED_SEQUENCES
 
 
 if __name__ == "__main__":
@@ -59,10 +70,13 @@ if __name__ == "__main__":
                         help="Print opcode coverage (Amount of used opcodes)",
                         action="store_true")
     parser.add_argument("-a", "--average",
-                        help="Calculates the average length of the given bytecode sequences",
+                        help="Prints the average amount of used opcodes per sequence",
                         action="store_true")
     parser.add_argument("-u", "--usage",
-                        help="Prints the amount of opcode usages",
+                        help="Prints the amount of used opcodes",
+                        action="store_true")
+    parser.add_argument("-b", "--bytes",
+                        help="Prints the average amount of bytes per sequence",
                         action="store_true")
 
     args = parser.parse_args()
@@ -73,6 +87,7 @@ if __name__ == "__main__":
         # inc validates sequences counter
         VALIDATED_SEQUENCES += 1
         valid, invalid_msg = validator.checkInput(args.validate)
+        addSequenceLength(validator.getByteCount(args.validate))
         if not valid:
             log.warn("Invalid opcode " + str(invalid_msg))
             log.warn(str.format("[VALIDATION FAILED]"))
@@ -91,6 +106,9 @@ if __name__ == "__main__":
 
     if args.coverage:
         log.info(str(validator.getUsedOpcodes()) + " of " + str(len(opcodes.opcodes)) + " operation codes used.")
+
+    if args.bytes:
+        log.info(str.format("Average byte length {0:.2f}", getAverageLength()))
 
     if args.average:
         log.info(str.format("Average used opcodes {}", (validator.getOpcodeCount() / VALIDATED_SEQUENCES)))
